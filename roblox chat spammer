@@ -1,0 +1,103 @@
+local TextChatService = game:GetService("TextChatService")
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+local channel = TextChatService:WaitForChild("TextChannels"):WaitForChild("RBXGeneral")
+
+local gui = Instance.new("ScreenGui", playerGui)
+gui.Name = "AutoChatGUI"
+gui.ResetOnSpawn = false
+
+local frame = Instance.new("Frame", gui)
+frame.Size = UDim2.new(0, 320, 0, 380)
+frame.Position = UDim2.new(0, 50, 0, 50)
+frame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+frame.BorderSizePixel = 0
+frame.Name = "MainFrame"
+
+local dragger = Instance.new("UIDragDetector", frame)
+
+local minimizeBtn = Instance.new("TextButton", frame)
+minimizeBtn.Size = UDim2.new(0, 30, 0, 30)
+minimizeBtn.Position = UDim2.new(1, -35, 0, 5)
+minimizeBtn.Text = "-"
+minimizeBtn.TextColor3 = Color3.new(1, 1, 1)
+minimizeBtn.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+minimizeBtn.Name = "Minimize"
+
+local contentFrame = Instance.new("Frame", frame)
+contentFrame.Size = UDim2.new(1, -10, 1, -50)
+contentFrame.Position = UDim2.new(0, 5, 0, 45)
+contentFrame.BackgroundTransparency = 1
+
+local layout = Instance.new("UIListLayout", contentFrame)
+layout.SortOrder = Enum.SortOrder.LayoutOrder
+layout.Padding = UDim.new(0, 5)
+
+local messageBoxes = {}
+for i = 1, 5 do
+	local box = Instance.new("TextBox", contentFrame)
+	box.Size = UDim2.new(1, 0, 0, 30)
+	box.PlaceholderText = "Message " .. i
+	box.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+	box.TextColor3 = Color3.new(1, 1, 1)
+	box.ClearTextOnFocus = false
+	table.insert(messageBoxes, box)
+end
+
+local delayBox = Instance.new("TextBox", contentFrame)
+delayBox.Size = UDim2.new(1, 0, 0, 30)
+delayBox.PlaceholderText = "Delay (seconds)"
+delayBox.Text = "2"
+delayBox.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+delayBox.TextColor3 = Color3.new(1, 1, 1)
+
+local toggleBtn = Instance.new("TextButton", contentFrame)
+toggleBtn.Size = UDim2.new(1, 0, 0, 35)
+toggleBtn.Text = "Auto: OFF"
+toggleBtn.BackgroundColor3 = Color3.fromRGB(90, 0, 0)
+toggleBtn.TextColor3 = Color3.new(1, 1, 1)
+
+local sendNow = Instance.new("TextButton", contentFrame)
+sendNow.Size = UDim2.new(1, 0, 0, 35)
+sendNow.Text = "Send Now"
+sendNow.BackgroundColor3 = Color3.fromRGB(0, 90, 0)
+sendNow.TextColor3 = Color3.new(1, 1, 1)
+
+local minimized = false
+minimizeBtn.MouseButton1Click:Connect(function()
+	minimized = not minimized
+	contentFrame.Visible = not minimized
+	minimizeBtn.Text = minimized and "+" or "-"
+end)
+
+local autoSend = false
+toggleBtn.MouseButton1Click:Connect(function()
+	autoSend = not autoSend
+	toggleBtn.Text = "Auto: " .. (autoSend and "ON" or "OFF")
+	toggleBtn.BackgroundColor3 = autoSend and Color3.fromRGB(0, 90, 0) or Color3.fromRGB(90, 0, 0)
+end)
+
+local function sendMessages()
+	for _, box in ipairs(messageBoxes) do
+		if box.Text ~= "" then
+			pcall(function()
+				channel:SendAsync(box.Text)
+			end)
+			task.wait(tonumber(delayBox.Text) or 2)
+		end
+	end
+end
+
+sendNow.MouseButton1Click:Connect(function()
+	sendMessages()
+end)
+
+task.spawn(function()
+	while true do
+		if autoSend then
+			sendMessages()
+		end
+		task.wait(0.5)
+	end
+end)
